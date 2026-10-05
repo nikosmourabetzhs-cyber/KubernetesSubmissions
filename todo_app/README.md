@@ -10,6 +10,5 @@ docker build -t nikosmrb/todo_app:1.2 .
 docker run --rm -e PORT=8080 nikosmrb/todo_app:1.2
 
 ## Kubernetes
-kubectl create deployment todo-app-dep --image=nikosmrb/todo_app:1.2
-kubectl set env deployment/todo-app-dep PORT=3001
+kubectl apply -f manifests/deployment.yaml
 kubectl logs deployment/todo-app-dep
