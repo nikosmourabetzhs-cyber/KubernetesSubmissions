@@ -12,3 +12,6 @@ docker run --rm -e PORT=8080 nikosmrb/todo_app:1.2
 ## Kubernetes
 kubectl apply -f manifests/deployment.yaml
 kubectl logs deployment/todo-app-dep
+
+## Access (port-forward)
+kubectl port-forward deployment/todo-app-dep 3003:3000

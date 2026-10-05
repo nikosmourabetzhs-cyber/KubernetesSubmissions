@@ -1,11 +1,27 @@
 const http = require('http')
 
-// Παίρνει τη θύρα από τη μεταβλητή PORT. Αν δεν έχει οριστεί, χρησιμοποιεί 3000
 const PORT = process.env.PORT || 3000
 
+const html = `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Todo app</title>
+  </head>
+  <body>
+    <h1>Todo app</h1>
+    <p>Hello from Kubernetes!</p>
+  </body>
+</html>`
+
 const server = http.createServer((req, res) => {
-  res.writeHead(200, { 'Content-Type': 'text/plain' })
-  res.end('Todo app\n')
+  if (req.method === 'GET' && req.url === '/') {
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' })
+    res.end(html)
+    return
+  }
+  res.writeHead(404, { 'Content-Type': 'text/plain' })
+  res.end('Not found\n')
 })
 
 server.listen(PORT, () => {
