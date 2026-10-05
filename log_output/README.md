@@ -15,6 +15,8 @@ docker run --rm <dockerhub-user>/log-output:1.1
 
 ## Kubernetes
 ```bash
-kubectl create deployment log-output-dep --image=<dockerhub-user>/log-output:1.1
+## Kubernetes
+```bash
+kubectl apply -f manifests/deployment.yaml
 kubectl logs -f deployment/log-output-dep
 ```
