@@ -21,7 +21,8 @@ todo_app/
 ├── Dockerfile
 └── manifests/
     ├── deployment.yaml   # Deployment (sets PORT=3000)
-    └── service.yaml      # NodePort Service (30080 -> 3000)
+    ├── service.yaml      # ClusterIP Service (2345 -> 3000)
+    └── ingress.yaml      # Ingress (/ -> todo-app-svc:2345)
 ```
 
 ## Run locally
@@ -43,31 +44,27 @@ Image: [`nikosmrb/todo_app`](https://hub.docker.com/r/nikosmrb/todo_app) on Dock
 ## Kubernetes
 
 ### 1. Create the cluster
-Port 8082 on the host is mapped to NodePort 30080 on the agent node:
+Port 8081 on the host is mapped to the Ingress on port 80:
 ```bash
 k3d cluster create --port 8082:30080@agent:0 -p 8081:80@loadbalancer --agents 2
 ```
 
 ### 2. Deploy
+The Ingress uses the path `/`, so the "Log output" Ingress must not be applied at the same time:
 ```bash
+kubectl delete -f ../log_output/manifests/ingress.yaml --ignore-not-found
 kubectl apply -f manifests/
 ```
 
 ### 3. Verify
 ```bash
-kubectl get pods,svc
+kubectl get pods,svc,ing
 kubectl logs deployment/todo-app-dep
 ```
 
 ### 4. Access
-Through the NodePort Service:
+Through the Ingress:
 ```
-http://localhost:8082
+http://localhost:8081
 ```
-Traffic flow: `localhost:8082` → k3d → `agent-0:30080` (NodePort) → `todo-app-svc:1234` → pod `:3000`
-
-Alternatively, with port-forward (no Service needed):
-```bash
-kubectl port-forward deployment/todo-app-dep 3003:3000
-```
-Open http://localhost:3003
+Traffic flow: `localhost:8081` → Traefik (Ingress controller) → `todo-app-svc:2345` → pod `:3000`
