@@ -6,4 +6,3 @@ COPY package.json ./
 COPY index.js ./
 
 CMD ["node", "index.js"]
-
