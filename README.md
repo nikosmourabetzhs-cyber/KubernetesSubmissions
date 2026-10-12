@@ -12,3 +12,4 @@
 - [1.7](https://github.com/nikosmourabetzhs-cyber/KubernetesSubmissions/tree/1.7/log_output)
 - [1.8](https://github.com/nikosmourabetzhs-cyber/KubernetesSubmissions/tree/1.8/todo_app)
 - [1.10](https://github.com/nikosmourabetzhs-cyber/KubernetesSubmissions/tree/1.10/log_output)
+- [1.11](https://github.com/nikosmourabetzhs-cyber/KubernetesSubmissions/tree/1.11) – Shared persistent volume between Log output and Ping-pong
