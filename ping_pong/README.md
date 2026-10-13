@@ -1,5 +1,7 @@
 # Ping-pong
 
+Runs in the namespace `exercises` (create it with `kubectl create namespace exercises`).
+
 A small HTTP server with a counter kept in memory.
 
 | Endpoint | Description |

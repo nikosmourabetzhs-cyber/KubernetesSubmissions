@@ -1,5 +1,7 @@
 # Log output
 
+Runs in the namespace `exercises` (create it with `kubectl create namespace exercises`).
+
 Two containers in a single pod, sharing an `emptyDir` volume mounted at `/usr/src/app/files`:
 
 - **writer**: generates a random string (UUID) on startup and appends a line with the timestamp and the string to `files/log.txt` every 5 seconds.
@@ -57,7 +59,7 @@ Deploy together with the ping-pong application:
 ```bash
 kubectl apply -f ../ping_pong/manifests/
 kubectl apply -f manifests/
-kubectl get pods        # log-output READY 2/2
+kubectl get pods -n exercises   # log-output READY 2/2
 ```
 
 Access through the Ingress:
@@ -75,6 +77,6 @@ localhost:8081 → Traefik → log-output-svc:2345 → reader :3000
 
 Logs of each container:
 ```bash
-kubectl logs -f deployment/log-output-dep -c writer
-kubectl logs -f deployment/log-output-dep -c reader
+kubectl logs -n exercises -f deployment/log-output-dep -c writer
+kubectl logs -n exercises -f deployment/log-output-dep -c reader
 ```
