@@ -3,9 +3,8 @@ const fs = require('fs')
 const path = require('path')
 
 const PORT = process.env.PORT || 3000
-const directory = path.join('/', 'usr', 'src', 'app', 'files')
-const logPath = path.join(directory, 'log.txt')
-const pingPongPath = path.join(directory, 'pingpong.txt')
+const PING_PONG_URL = process.env.PING_PONG_URL || 'http://ping-pong-svc:2345/pings'
+const logPath = path.join('/', 'usr', 'src', 'app', 'files', 'log.txt')
 
 const readLastLine = () => {
   try {
@@ -16,18 +15,25 @@ const readLastLine = () => {
   }
 }
 
-const readPingPongs = () => {
-  try {
-    return parseInt(fs.readFileSync(pingPongPath, 'utf8'), 10) || 0
-  } catch {
-    return 0
-  }
+// Ρωτάει την ping-pong μέσω HTTP
+const getPings = async () => {
+  const response = await fetch(PING_PONG_URL)
+  if (!response.ok) throw new Error(`Ping-pong responded ${response.status}`)
+  const data = await response.json()
+  return data.pings
 }
 
-const server = http.createServer((req, res) => {
+const server = http.createServer(async (req, res) => {
   if (req.method === 'GET' && req.url === '/') {
+    let pings
+    try {
+      pings = await getPings()
+    } catch (err) {
+      console.error(`Could not reach ping-pong: ${err.message}`)
+      pings = 'unavailable'
+    }
     res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' })
-    res.end(`${readLastLine()}.\nPing / Pongs: ${readPingPongs()}\n`)
+    res.end(`${readLastLine()}.\nPing / Pongs: ${pings}\n`)
     return
   }
   res.writeHead(404, { 'Content-Type': 'text/plain' })
@@ -35,7 +41,7 @@ const server = http.createServer((req, res) => {
 })
 
 server.listen(PORT, () => {
-  console.log(`Server started in port ${PORT}`)
+  console.log(`Server started in port ${PORT}, ping-pong at ${PING_PONG_URL}`)
 })
 
 process.on('SIGTERM', () => server.close(() => process.exit(0)))

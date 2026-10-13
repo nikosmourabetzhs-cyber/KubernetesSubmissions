@@ -2,20 +2,18 @@
 
 Cluster-level storage, kept separate from the applications (normally managed by the cluster administrator).
 
-- `persistentvolume.yaml`: a local PersistentVolume (`shared-pv`, 1Gi) at `/tmp/kube` on node `k3d-k3s-default-agent-0`
-- `persistentvolumeclaim.yaml`: the claim `shared-claim`, used by both "Log output" and "Ping-pong"
+| File | Object | Used by |
+|---|---|---|
+| `persistentvolume.yaml` | `shared-pv` (local, 1Gi, `/tmp/kube` on `k3d-k3s-default-agent-0`) | not used since exercise 2.1 |
+| `persistentvolumeclaim.yaml` | `shared-claim` | not used since exercise 2.1 |
 
-## Setup
+`shared-pv` / `shared-claim` were used in exercise 1.11 to share the ping-pong count between "Log output" and "Ping-pong" through a file. Since exercise 2.1 the two applications communicate over HTTP instead, so these objects are not applied.
 
-The directory must exist on the node before applying:
+## Setup (if needed)
+
+The directory must exist on the node before applying a local PersistentVolume:
 ```bash
 docker exec k3d-k3s-default-agent-0 mkdir -p /tmp/kube
 kubectl apply -f volumes/
 kubectl get pv,pvc
 ```
-
-Files stored in the volume:
-| File | Written by | Read by |
-|---|---|---|
-| `log.txt` | log output writer | log output reader |
-| `pingpong.txt` | ping-pong | log output reader |
