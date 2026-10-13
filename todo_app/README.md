@@ -3,8 +3,8 @@
 The course project. Serves a page with:
 
 - a random image from Lorem Picsum, cached for 10 minutes in a persistent volume (`todo-claim`)
-- an input field (max 140 characters) and a "Create todo" button (not functional yet)
-- a list of hardcoded todos
+- an input field (max 140 characters) and a "Create todo" button that sends the todo to the todo-backend
+- the list of todos, fetched from the todo-backend (`TODO_BACKEND_URL`)
 
 `GET /shutdown` stops the container, to test that the cached image survives a crash.
 
@@ -26,4 +26,4 @@ kubectl apply -f manifests/
 
 Open http://localhost:8081
 
-Image: `nikosmrb/todo_app:1.13`
+Image: `nikosmrb/todo_app:2.2`

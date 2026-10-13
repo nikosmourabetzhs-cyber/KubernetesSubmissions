@@ -18,12 +18,14 @@ spec:
             claimName: todo-claim
       containers:
         - name: todo-app
-          image: nikosmrb/todo_app:1.13
+          image: nikosmrb/todo_app:2.2
           env:
             - name: PORT
               value: "3000"
             - name: IMAGE_MAX_AGE_SECONDS
               value: "600"
+            - name: TODO_BACKEND_URL
+              value: "http://todo-backend-svc:2345/todos"
           volumeMounts:
             - name: image-cache
               mountPath: /usr/src/app/files

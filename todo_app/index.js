@@ -3,25 +3,24 @@ const fs = require('fs')
 const path = require('path')
 
 const PORT = process.env.PORT || 3000
+const TODO_BACKEND_URL = process.env.TODO_BACKEND_URL || 'http://todo-backend-svc:2345/todos'
 const IMAGE_URL = process.env.IMAGE_URL || 'https://picsum.photos/1200'
 const MAX_AGE_MS = (parseInt(process.env.IMAGE_MAX_AGE_SECONDS, 10) || 600) * 1000
 
 const directory = path.join('/', 'usr', 'src', 'app', 'files')
 const imagePath = path.join(directory, 'image.jpg')
-
 fs.mkdirSync(directory, { recursive: true })
-
-// Hardcoded todos (θα έρθουν από το todo-backend στην 2.2)
-const todos = [
-  'Learn JavaScript',
-  'Learn React',
-  'Build a project',
-]
 
 const escapeHtml = (text) =>
   text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
-// Πόσο παλιά είναι η εικόνα (ms), ή null αν δεν υπάρχει
+// Ρωτάει το todo-backend μέσω HTTP
+const getTodos = async () => {
+  const response = await fetch(TODO_BACKEND_URL)
+  if (!response.ok) throw new Error(`Backend responded ${response.status}`)
+  return response.json()
+}
+
 const imageAge = () => {
   try {
     return Date.now() - fs.statSync(imagePath).mtimeMs
@@ -30,7 +29,6 @@ const imageAge = () => {
   }
 }
 
-// Κατεβάζει νέα εικόνα. Αν τρέχει ήδη download, δεν ξεκινάει δεύτερο.
 let downloading = null
 const downloadImage = () => {
   if (downloading) return downloading
@@ -39,9 +37,8 @@ const downloadImage = () => {
     const response = await fetch(IMAGE_URL)
     if (!response.ok) throw new Error(`Download failed: ${response.status}`)
     const buffer = Buffer.from(await response.arrayBuffer())
-    const tmpPath = imagePath + '.tmp'
-    fs.writeFileSync(tmpPath, buffer)
-    fs.renameSync(tmpPath, imagePath)
+    fs.writeFileSync(imagePath + '.tmp', buffer)
+    fs.renameSync(imagePath + '.tmp', imagePath)
     console.log('New image saved')
   })().finally(() => {
     downloading = null
@@ -58,7 +55,7 @@ const ensureImage = async () => {
   }
 }
 
-const renderPage = () => `<!DOCTYPE html>
+const renderPage = (todos) => `<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
@@ -70,9 +67,6 @@ const renderPage = () => `<!DOCTYPE html>
       form { display: flex; gap: 0.5rem; margin-top: 1.5rem; }
       input { flex: 1; padding: 0.5rem; font-size: 1rem; }
       button { padding: 0.5rem 1rem; font-size: 1rem; cursor: pointer; }
-      #counter { color: #666; font-size: 0.85rem; margin-top: 0.25rem; }
-      ul { padding-left: 1.25rem; }
-      li { margin: 0.25rem 0; }
       footer { margin-top: 2rem; color: #666; font-size: 0.9rem; }
     </style>
   </head>
@@ -80,33 +74,30 @@ const renderPage = () => `<!DOCTYPE html>
     <h1>The project App</h1>
     <img src="/image" alt="Random image from Lorem Picsum">
 
-    <form onsubmit="return false">
-      <input id="todo-input" type="text" name="todo" maxlength="140"
+    <form action="/todos" method="POST">
+      <input type="text" name="todo" maxlength="140" required
              placeholder="What needs to be done?" aria-label="New todo">
-      <button type="button">Create todo</button>
+      <button type="submit">Create todo</button>
     </form>
-    <div id="counter">0 / 140</div>
 
     <ul>
       ${todos.map((todo) => `<li>${escapeHtml(todo)}</li>`).join('\n      ')}
     </ul>
 
     <footer>DevOps with Kubernetes 2026</footer>
-
-    <script>
-      const input = document.getElementById('todo-input')
-      const counter = document.getElementById('counter')
-      input.addEventListener('input', () => {
-        counter.textContent = input.value.length + ' / 140'
-      })
-    </script>
   </body>
 </html>`
 
 const server = http.createServer(async (req, res) => {
   if (req.method === 'GET' && req.url === '/') {
+    let todos = []
+    try {
+      todos = await getTodos()
+    } catch (err) {
+      console.error(`Could not reach todo-backend: ${err.message}`)
+    }
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' })
-    res.end(renderPage())
+    res.end(renderPage(todos))
     return
   }
 
@@ -123,11 +114,9 @@ const server = http.createServer(async (req, res) => {
     return
   }
 
-  // Μόνο για δοκιμές: τερματίζει το container
   if (req.method === 'GET' && req.url === '/shutdown') {
     res.writeHead(200, { 'Content-Type': 'text/plain' })
     res.end('Shutting down\n')
-    console.log('Shutdown requested')
     setTimeout(() => process.exit(1), 100)
     return
   }
@@ -136,8 +125,5 @@ const server = http.createServer(async (req, res) => {
   res.end('Not found\n')
 })
 
-server.listen(PORT, () => {
-  console.log(`Server started in port ${PORT}`)
-})
-
+server.listen(PORT, () => console.log(`Server started in port ${PORT}`))
 process.on('SIGTERM', () => server.close(() => process.exit(0)))
