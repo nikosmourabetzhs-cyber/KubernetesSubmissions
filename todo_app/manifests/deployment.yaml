@@ -12,9 +12,18 @@ spec:
       labels:
         app: todo-app
     spec:
+      volumes:
+        - name: image-cache
+          persistentVolumeClaim:
+            claimName: todo-claim
       containers:
         - name: todo-app
-          image: nikosmrb/todo_app:1.5
+          image: nikosmrb/todo_app:1.12
           env:
             - name: PORT
               value: "3000"
+            - name: IMAGE_MAX_AGE_SECONDS
+              value: "600"
+          volumeMounts:
+            - name: image-cache
+              mountPath: /usr/src/app/files
