@@ -41,7 +41,7 @@ log_output/
 
 ```bash
 docker build -t nikosmrb/log_output_writer:1.10 writer/
-docker build -t nikosmrb/log_output_reader:2.1 reader/
+docker build -t nikosmrb/log_output_reader:2.5.2 reader/
 ```
 
 Images on Docker Hub:
@@ -80,3 +80,11 @@ Logs of each container:
 kubectl logs -n exercises -f deployment/log-output-dep -c writer
 kubectl logs -n exercises -f deployment/log-output-dep -c reader
 ```
+
+## ConfigMap
+
+`manifests/configmap.yaml` (`log-output-config`) provides to the reader:
+- the file `information.txt`, mounted at `/usr/src/app/config/information.txt`
+- the env variable `MESSAGE`
+
+Both are printed at the top of the `GET /` response.

@@ -1,26 +1,29 @@
 const http = require('http')
 const fs = require('fs')
-const path = require('path')
 
 const PORT = process.env.PORT || 3000
 const PING_PONG_URL = process.env.PING_PONG_URL || 'http://ping-pong-svc:2345/pings'
-const logPath = path.join('/', 'usr', 'src', 'app', 'files', 'log.txt')
+const MESSAGE = process.env.MESSAGE || ''
+const logPath = '/usr/src/app/files/log.txt'
+const infoPath = '/usr/src/app/config/information.txt'
 
-const readLastLine = () => {
+const readFile = (file, fallback) => {
   try {
-    const lines = fs.readFileSync(logPath, 'utf8').trim().split('\n')
-    return lines[lines.length - 1]
+    return fs.readFileSync(file, 'utf8').trim()
   } catch {
-    return 'No logs yet'
+    return fallback
   }
 }
 
-// Ρωτάει την ping-pong μέσω HTTP
+const readLastLine = () => {
+  const lines = readFile(logPath, 'No logs yet').split('\n')
+  return lines[lines.length - 1]
+}
+
 const getPings = async () => {
   const response = await fetch(PING_PONG_URL)
   if (!response.ok) throw new Error(`Ping-pong responded ${response.status}`)
-  const data = await response.json()
-  return data.pings
+  return (await response.json()).pings
 }
 
 const server = http.createServer(async (req, res) => {
@@ -33,15 +36,17 @@ const server = http.createServer(async (req, res) => {
       pings = 'unavailable'
     }
     res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' })
-    res.end(`${readLastLine()}.\nPing / Pongs: ${pings}\n`)
+    res.end(
+      `file content: ${readFile(infoPath, 'no file')}\n` +
+      `env variable: MESSAGE=${MESSAGE}\n` +
+      `${readLastLine()}.\n` +
+      `Ping / Pongs: ${pings}\n`
+    )
     return
   }
   res.writeHead(404, { 'Content-Type': 'text/plain' })
   res.end('Not found\n')
 })
 
-server.listen(PORT, () => {
-  console.log(`Server started in port ${PORT}, ping-pong at ${PING_PONG_URL}`)
-})
-
+server.listen(PORT, () => console.log(`Server started in port ${PORT}`))
 process.on('SIGTERM', () => server.close(() => process.exit(0)))

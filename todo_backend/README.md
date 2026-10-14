@@ -1,5 +1,7 @@
 # Todo backend
 
+Runs in the namespace `project` (create it with `kubectl create namespace project`).
+
 Stores the todos of the project in memory.
 
 | Endpoint | Description |
@@ -15,4 +17,8 @@ Reached by the todo-app through `todo-backend-svc:2345`, and by the browser form
 kubectl apply -f manifests/
 ```
 
-Image: `nikosmrb/todo_backend:2.2`
+Image: `nikosmrb/todo_backend:2.6`
+
+## Configuration
+
+`PORT` comes from `manifests/configmap.yaml` (`todo-backend-config`). The app exits if it is missing.

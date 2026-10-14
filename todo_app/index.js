@@ -2,12 +2,13 @@ const http = require('http')
 const fs = require('fs')
 const path = require('path')
 
-const PORT = process.env.PORT || 3000
-const TODO_BACKEND_URL = process.env.TODO_BACKEND_URL || 'http://todo-backend-svc:2345/todos'
-const IMAGE_URL = process.env.IMAGE_URL || 'https://picsum.photos/1200'
-const MAX_AGE_MS = (parseInt(process.env.IMAGE_MAX_AGE_SECONDS, 10) || 600) * 1000
+const PORT = process.env.PORT
+const TODO_BACKEND_URL = process.env.TODO_BACKEND_URL
+const IMAGE_URL = process.env.IMAGE_URL
+const MAX_AGE_MS = parseInt(process.env.IMAGE_MAX_AGE_SECONDS, 10) * 1000
 
-const directory = path.join('/', 'usr', 'src', 'app', 'files')
+const directory = process.env.IMAGE_DIR
+for (const name of ['PORT', 'TODO_BACKEND_URL', 'IMAGE_URL', 'IMAGE_MAX_AGE_SECONDS', 'IMAGE_DIR']) { if (process.env[name] === undefined) { console.error('Missing env variable: ' + name); process.exit(1) } }
 const imagePath = path.join(directory, 'image.jpg')
 fs.mkdirSync(directory, { recursive: true })
 

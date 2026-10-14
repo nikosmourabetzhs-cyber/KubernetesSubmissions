@@ -1,6 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  namespace: project
   name: todo-app-dep
 spec:
   replicas: 1
@@ -18,14 +19,10 @@ spec:
             claimName: todo-claim
       containers:
         - name: todo-app
-          image: nikosmrb/todo_app:2.2
-          env:
-            - name: PORT
-              value: "3000"
-            - name: IMAGE_MAX_AGE_SECONDS
-              value: "600"
-            - name: TODO_BACKEND_URL
-              value: "http://todo-backend-svc:2345/todos"
+          image: nikosmrb/todo_app:2.6
+          envFrom:
+            - configMapRef:
+                name: todo-app-config
           volumeMounts:
             - name: image-cache
               mountPath: /usr/src/app/files

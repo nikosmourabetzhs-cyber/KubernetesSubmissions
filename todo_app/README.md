@@ -1,5 +1,7 @@
 # Todo app
 
+Runs in the namespace `project` (create it with `kubectl create namespace project`).
+
 The course project. Serves a page with:
 
 - a random image from Lorem Picsum, cached for 10 minutes in a persistent volume (`todo-claim`)
@@ -26,4 +28,8 @@ kubectl apply -f manifests/
 
 Open http://localhost:8081
 
-Image: `nikosmrb/todo_app:2.2`
+Image: `nikosmrb/todo_app:2.6`
+
+## Configuration
+
+All settings come from env variables defined in `manifests/configmap.yaml` (`todo-app-config`): `PORT`, `TODO_BACKEND_URL`, `IMAGE_URL`, `IMAGE_MAX_AGE_SECONDS`, `IMAGE_DIR`. Nothing is hard coded; the app exits if a variable is missing.
