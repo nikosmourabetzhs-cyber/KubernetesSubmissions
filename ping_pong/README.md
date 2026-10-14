@@ -44,8 +44,8 @@ curl localhost:3000/pings
 ## Docker
 
 ```bash
-docker build -t nikosmrb/ping_pong:2.1 .
-docker run --rm -p 3000:3000 nikosmrb/ping_pong:2.1
+docker build -t nikosmrb/ping_pong:2.7 .
+docker run --rm -p 3000:3000 nikosmrb/ping_pong:2.7
 ```
 
 Image: [`nikosmrb/ping_pong`](https://hub.docker.com/r/nikosmrb/ping_pong) on Docker Hub.
@@ -68,3 +68,16 @@ Check the internal endpoint from inside the cluster:
 kubectl run tester --rm -it --restart=Never --image=curlimages/curl -- \
   curl -s http://ping-pong-svc:2345/pings
 ```
+
+## Database
+
+The counter is stored in PostgreSQL (`manifests/postgres.yaml`): a StatefulSet with one replica, a headless Service `postgres-svc`, and a volume from `volumeClaimTemplates` (`local-path`), so the counter survives pod restarts.
+
+The password is a Secret that is not stored in git. Create it before applying:
+```bash
+kubectl create secret generic postgres-secret -n exercises \
+  --from-literal=POSTGRES_PASSWORD=<password>
+kubectl apply -f manifests/
+```
+
+The app connects with the standard env variables `PGHOST`, `PGUSER`, `PGDATABASE` and `PGPASSWORD`.

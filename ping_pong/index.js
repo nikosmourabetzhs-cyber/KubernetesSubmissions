@@ -1,32 +1,55 @@
 const http = require('http')
+const { Pool } = require('pg')
 
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT
+if (PORT === undefined) {
+  console.error('Missing env variable: PORT')
+  process.exit(1)
+}
 
-// Ο μετρητής ζει στη μνήμη
-let counter = 0
+// Διαβάζει αυτόματα PGHOST, PGUSER, PGPASSWORD, PGDATABASE
+const pool = new Pool()
 
-const server = http.createServer((req, res) => {
-  // Για τον browser: απαντάει pong και αυξάνει τον μετρητή
-  if (req.method === 'GET' && req.url === '/pingpong') {
-    res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' })
-    res.end(`pong ${counter}\n`)
-    counter++
-    return
+// Περιμένει τη βάση και φτιάχνει τον πίνακα αν δεν υπάρχει
+const initDb = async () => {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      await pool.query('CREATE TABLE IF NOT EXISTS counter (id INT PRIMARY KEY, value INT NOT NULL)')
+      await pool.query('INSERT INTO counter (id, value) VALUES (1, 0) ON CONFLICT (id) DO NOTHING')
+      console.log('Database ready')
+      return
+    } catch (err) {
+      console.log(`Database not ready (attempt ${attempt}): ${err.message}`)
+      await new Promise((resolve) => setTimeout(resolve, 2000))
+    }
   }
+}
 
-  // Για το log-output: λέει πόσα pongs έχουν γίνει, ΧΩΡΙΣ να αυξήσει τον μετρητή
-  if (req.method === 'GET' && req.url === '/pings') {
-    res.writeHead(200, { 'Content-Type': 'application/json' })
-    res.end(JSON.stringify({ pings: counter }))
-    return
+const server = http.createServer(async (req, res) => {
+  try {
+    if (req.method === 'GET' && req.url === '/pingpong') {
+      const result = await pool.query('UPDATE counter SET value = value + 1 WHERE id = 1 RETURNING value')
+      res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' })
+      res.end(`pong ${result.rows[0].value - 1}\n`)
+      return
+    }
+    if (req.method === 'GET' && req.url === '/pings') {
+      const result = await pool.query('SELECT value FROM counter WHERE id = 1')
+      res.writeHead(200, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({ pings: result.rows[0].value }))
+      return
+    }
+    res.writeHead(404, { 'Content-Type': 'text/plain' })
+    res.end('Not found\n')
+  } catch (err) {
+    console.error(err.message)
+    res.writeHead(500, { 'Content-Type': 'text/plain' })
+    res.end('Database error\n')
   }
-
-  res.writeHead(404, { 'Content-Type': 'text/plain' })
-  res.end('Not found\n')
 })
 
-server.listen(PORT, () => {
-  console.log(`Server started in port ${PORT}`)
+initDb().then(() => {
+  server.listen(PORT, () => console.log(`Server started in port ${PORT}`))
 })
 
-process.on('SIGTERM', () => server.close(() => process.exit(0)))
+process.on('SIGTERM', () => server.close(() => pool.end().then(() => process.exit(0))))
